@@ -2,11 +2,13 @@ package paginator
 
 import (
 	"fmt"
-	"github.com/goextension/log"
+	"github.com/goextension/log/zap"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/goextension/log"
 )
 
 const DefaultPaginatorPerPage = 10
@@ -50,6 +52,10 @@ type paginator struct {
 	PerPage    int
 	resultData *resultData
 	values     url.Values
+}
+
+func init() {
+	zap.InitZapSugar()
 }
 
 func New(counter Counter, finder Finder) Paginator {
