@@ -23,6 +23,11 @@ type Finder interface {
 	Find(p Paginator) (interface{}, error)
 }
 
+type Pager interface {
+	Counter
+	Finder
+}
+
 type Paginator interface {
 	Find() (interface{}, error)
 	ParseRequest(r *http.Request) Paginator
