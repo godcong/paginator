@@ -35,6 +35,8 @@ type Pager interface {
 
 type Paginator interface {
 	Find() (interface{}, error)
+	SetPerPage(int)
+	PerPage() int
 	ParseRequest(r *http.Request) Paginator
 	Offset() int
 	Limit() int
@@ -59,7 +61,7 @@ type resultData struct {
 type paginator struct {
 	counter    Counter
 	finder     Finder
-	PerPage    int
+	perPage    int
 	resultData *resultData
 	values     url.Values
 }
@@ -72,7 +74,7 @@ func ParsePage(pager Pager) (interface{}, error) {
 	p := &paginator{
 		counter:    pager,
 		finder:     pager,
-		PerPage:    DefaultPaginatorPerPage,
+		perPage:    DefaultPaginatorPerPage,
 		resultData: &resultData{},
 		values:     nil,
 	}
@@ -84,10 +86,18 @@ func New(counter Counter, finder Finder) Paginator {
 	return &paginator{
 		counter:    counter,
 		finder:     finder,
-		PerPage:    DefaultPaginatorPerPage,
+		perPage:    DefaultPaginatorPerPage,
 		resultData: &resultData{},
 		values:     nil,
 	}
+}
+
+func (p *paginator) PerPage() int {
+	return p.perPage
+}
+
+func (p *paginator) SetPerPage(perPage int) {
+	p.perPage = perPage
 }
 
 func (p *paginator) Find() (interface{}, error) {
@@ -104,7 +114,7 @@ func (p *paginator) ParseRequest(r *http.Request) Paginator {
 	perPage := p.values.Get("per_page")
 	p.resultData.PerPage, err = strconv.Atoi(perPage)
 	if err != nil {
-		p.resultData.PerPage = p.PerPage
+		p.resultData.PerPage = p.PerPage()
 	}
 	current := p.values.Get("page")
 	p.resultData.CurrentPage, err = strconv.Atoi(current)
