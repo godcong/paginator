@@ -2,13 +2,10 @@ package paginator
 
 import (
 	"fmt"
-	"github.com/goextension/log/zap"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
-
-	"github.com/goextension/log"
 )
 
 const DefaultPaginatorPerPage = 10
@@ -64,10 +61,6 @@ type paginator struct {
 	perPage int
 	page    *Page
 	values  url.Values
-}
-
-func init() {
-	zap.InitZapSugar()
 }
 
 func ParsePage(pager Pager) (interface{}, error) {
@@ -146,7 +139,7 @@ func (p *paginator) find() error {
 
 	err := p.counter.Count(&count)
 	if DEBUG {
-		log.Infow("count", "error", err, "count", count)
+		fmt.Println("count", "error", err, "count", count)
 	}
 	if err != nil {
 		return err
