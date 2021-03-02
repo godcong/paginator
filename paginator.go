@@ -23,9 +23,14 @@ type Finder interface {
 	Find(p Paginator) (interface{}, error)
 }
 
+type Requester interface {
+	Request() *http.Request
+}
+
 type Pager interface {
 	Counter
 	Finder
+	Requester
 }
 
 type Paginator interface {
@@ -61,6 +66,18 @@ type paginator struct {
 
 func init() {
 	zap.InitZapSugar()
+}
+
+func ParsePage(pager Pager) (interface{}, error) {
+	p := &paginator{
+		counter:    pager,
+		finder:     pager,
+		PerPage:    DefaultPaginatorPerPage,
+		resultData: &resultData{},
+		values:     nil,
+	}
+	p.ParseRequest(pager.Request())
+	return p.Find()
 }
 
 func New(counter Counter, finder Finder) Paginator {
