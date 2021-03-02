@@ -43,7 +43,7 @@ type Paginator interface {
 	Total() int64
 }
 
-type resultData struct {
+type Page struct {
 	CurrentPage  int         `json:"current_page"`
 	LastPage     int         `json:"last_page"`
 	PerPage      int         `json:"per_page"`
@@ -59,11 +59,11 @@ type resultData struct {
 }
 
 type paginator struct {
-	counter    Counter
-	finder     Finder
-	perPage    int
-	resultData *resultData
-	values     url.Values
+	counter Counter
+	finder  Finder
+	perPage int
+	page    *Page
+	values  url.Values
 }
 
 func init() {
@@ -72,11 +72,11 @@ func init() {
 
 func ParsePage(pager Pager) (interface{}, error) {
 	p := &paginator{
-		counter:    pager,
-		finder:     pager,
-		perPage:    DefaultPaginatorPerPage,
-		resultData: &resultData{},
-		values:     nil,
+		counter: pager,
+		finder:  pager,
+		perPage: DefaultPaginatorPerPage,
+		page:    &Page{},
+		values:  nil,
 	}
 	p.ParseRequest(pager.Request())
 	return p.Find()
@@ -84,11 +84,11 @@ func ParsePage(pager Pager) (interface{}, error) {
 
 func New(counter Counter, finder Finder) Paginator {
 	return &paginator{
-		counter:    counter,
-		finder:     finder,
-		perPage:    DefaultPaginatorPerPage,
-		resultData: &resultData{},
-		values:     nil,
+		counter: counter,
+		finder:  finder,
+		perPage: DefaultPaginatorPerPage,
+		page:    &Page{},
+		values:  nil,
 	}
 }
 
@@ -104,7 +104,7 @@ func (p *paginator) Find() (interface{}, error) {
 	if err := p.find(); err != nil {
 		return nil, err
 	}
-	return p.resultData, nil
+	return p.page, nil
 }
 
 func (p *paginator) ParseRequest(r *http.Request) Paginator {
@@ -112,33 +112,33 @@ func (p *paginator) ParseRequest(r *http.Request) Paginator {
 
 	p.values = r.URL.Query()
 	perPage := p.values.Get("per_page")
-	p.resultData.PerPage, err = strconv.Atoi(perPage)
+	p.page.PerPage, err = strconv.Atoi(perPage)
 	if err != nil {
-		p.resultData.PerPage = p.PerPage()
+		p.page.PerPage = p.PerPage()
 	}
 	current := p.values.Get("page")
-	p.resultData.CurrentPage, err = strconv.Atoi(current)
+	p.page.CurrentPage, err = strconv.Atoi(current)
 	if err != nil {
-		p.resultData.CurrentPage = 1
+		p.page.CurrentPage = 1
 	}
 
-	p.resultData.Path = r.Host + r.URL.Path
+	p.page.Path = r.Host + r.URL.Path
 	if DEBUG {
-		fmt.Println("parse query", "raw", r.URL.RawQuery, "per page", perPage, "page", current, "path", p.resultData.Path)
+		fmt.Println("parse query", "raw", r.URL.RawQuery, "per page", perPage, "page", current, "path", p.page.Path)
 	}
 	return p
 }
 
 func (p *paginator) Offset() int {
-	return p.resultData.From
+	return p.page.From
 }
 
 func (p *paginator) Limit() int {
-	return p.resultData.PerPage
+	return p.page.PerPage
 }
 
 func (p *paginator) Total() int64 {
-	return p.resultData.Total
+	return p.page.Total
 }
 
 func (p *paginator) find() error {
@@ -152,18 +152,18 @@ func (p *paginator) find() error {
 		return err
 	}
 
-	p.resultData.make(count)
+	p.page.make(count)
 
 	v, err := p.finder.Find(p)
 	if err != nil {
 		return err
 	}
-	p.resultData.Data = v
+	p.page.Data = v
 
 	return nil
 }
 
-func (p *resultData) make(count int64) {
+func (p *Page) make(count int64) {
 	if count == 0 {
 		p.CurrentPage = 1
 		return
@@ -183,7 +183,7 @@ func (p *resultData) make(count int64) {
 	return
 }
 
-func (p *resultData) next() string {
+func (p *Page) next() string {
 	if p.LastPage > p.CurrentPage+1 {
 		v := url.Values{}
 		p.perPage(v)
@@ -193,7 +193,7 @@ func (p *resultData) next() string {
 	return ""
 }
 
-func (p *resultData) prev() string {
+func (p *Page) prev() string {
 	if p.CurrentPage-1 > 0 {
 		v := url.Values{}
 		p.perPage(v)
@@ -203,7 +203,7 @@ func (p *resultData) prev() string {
 	return ""
 }
 
-func (p *resultData) last() string {
+func (p *Page) last() string {
 	if p.LastPage > 0 {
 		v := url.Values{}
 		p.perPage(v)
@@ -212,7 +212,7 @@ func (p *resultData) last() string {
 	}
 	return ""
 }
-func (p *resultData) first() string {
+func (p *Page) first() string {
 	if p.Total > 0 {
 		v := url.Values{}
 		p.perPage(v)
@@ -230,10 +230,10 @@ func perPage(values url.Values, i int) {
 	values.Set("per_page", strconv.Itoa(i))
 }
 
-func (p *resultData) page(values url.Values, i int) {
+func (p *Page) page(values url.Values, i int) {
 	values.Set("per_page", strconv.Itoa(i))
 }
 
-func (p *resultData) perPage(values url.Values) {
+func (p *Page) perPage(values url.Values) {
 	perPage(values, p.PerPage)
 }
