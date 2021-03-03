@@ -63,7 +63,7 @@ type paginator struct {
 	values  url.Values
 }
 
-func ParsePage(pager Pager) (interface{}, error) {
+func ParsePage(pager Pager) (Page, error) {
 	p := &paginator{
 		counter: pager,
 		finder:  pager,
