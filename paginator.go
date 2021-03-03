@@ -31,7 +31,7 @@ type Pager interface {
 }
 
 type Paginator interface {
-	Find() (interface{}, error)
+	Find() (Page, error)
 	SetPerPage(int)
 	PerPage() int
 	ParseRequest(r *http.Request) Paginator
@@ -93,11 +93,11 @@ func (p *paginator) SetPerPage(perPage int) {
 	p.perPage = perPage
 }
 
-func (p *paginator) Find() (interface{}, error) {
+func (p *paginator) Find() (Page, error) {
 	if err := p.find(); err != nil {
-		return nil, err
+		return Page{}, err
 	}
-	return p.page, nil
+	return *p.page, nil
 }
 
 func (p *paginator) ParseRequest(r *http.Request) Paginator {
