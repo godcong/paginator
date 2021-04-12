@@ -51,13 +51,13 @@ type Page struct {
 	NextPageURL  string      `json:"next_page_url"`
 	PrevPageURL  string      `json:"prev_page_url"`
 	Path         string      `json:"path"`
-	From         int         `json:"from"`
-	To           int         `json:"to"`
 }
 
 type paginator struct {
 	counter Counter
 	finder  Finder
+	from    int
+	to      int
 	perPage int
 	page    *Page
 	values  url.Values
@@ -123,7 +123,7 @@ func (p *paginator) ParseRequest(r *http.Request) Paginator {
 }
 
 func (p *paginator) Offset() int {
-	return p.page.From
+	return p.from
 }
 
 func (p *paginator) Limit() int {
@@ -145,7 +145,7 @@ func (p *paginator) find() error {
 		return err
 	}
 
-	p.page.make(count)
+	p.from, p.to = p.page.make(count)
 
 	v, err := p.finder.Find(p)
 	if err != nil {
@@ -156,7 +156,7 @@ func (p *paginator) find() error {
 	return nil
 }
 
-func (p *Page) make(count int64) {
+func (p *Page) make(count int64) (from, to int) {
 	if count == 0 {
 		p.CurrentPage = 1
 		return
@@ -167,8 +167,8 @@ func (p *Page) make(count int64) {
 	if p.CurrentPage <= 0 || p.CurrentPage > p.LastPage {
 		p.CurrentPage = 1
 	}
-	p.From = (p.CurrentPage - 1) * p.PerPage
-	p.To = p.From + p.PerPage
+	from = (p.CurrentPage - 1) * p.PerPage
+	to = from + p.PerPage
 	p.NextPageURL = p.next()
 	p.PrevPageURL = p.prev()
 	p.LastPageURL = p.last()
