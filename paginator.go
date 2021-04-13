@@ -151,8 +151,12 @@ func (p *paginator) Conditions() (url.Values, bool) {
 	if len(p.conditions) == 0 {
 		return values, false
 	}
+	tmp := ""
 	for _, condition := range p.conditions {
-		values.Set(condition, p.values.Get(condition))
+		tmp = p.values.Get(condition)
+		if tmp != "" {
+			values.Set(condition, tmp)
+		}
 	}
 	return values, true
 }
