@@ -12,8 +12,12 @@ const DefaultPaginatorPerPage = 10
 
 var DEBUG = false
 
+type Conditioner interface {
+	Conditions() (url.Values, bool)
+}
+
 type Counter interface {
-	Count(v *int64) error
+	Count(cond Conditioner) (int64, error)
 }
 
 type Finder interface {
@@ -35,6 +39,7 @@ type Paginator interface {
 	SetPerPage(int)
 	PerPage() int
 	ParseRequest(r *http.Request) Paginator
+	Conditions() (url.Values, bool)
 	Offset() int
 	Limit() int
 	Total() int64
@@ -141,17 +146,19 @@ func (p *paginator) SetConditions(conditions ...string) {
 	p.conditions = conditions
 }
 
-func (p *paginator) Conditions() ([]string, bool) {
+func (p *paginator) Conditions() (url.Values, bool) {
+	values := url.Values{}
 	if len(p.conditions) == 0 {
-		return nil, false
+		return values, false
 	}
-	return p.conditions, true
+	for _, condition := range p.conditions {
+		values.Set(condition, p.values.Get(condition))
+	}
+	return values, true
 }
 
 func (p *paginator) find() error {
-	var count int64
-
-	err := p.counter.Count(&count)
+	count, err := p.counter.Count(p)
 	if DEBUG {
 		fmt.Println("count", "error", err, "count", count)
 	}
@@ -184,24 +191,12 @@ func (p *paginator) makePage(count int64) (page *Page) {
 	}
 	p.from = (page.CurrentPage - 1) * page.PerPage
 	p.to = p.from + page.PerPage
-	v := p.queryConditions()
+	v, _ := p.Conditions()
 	page.NextPageURL = page.next(v)
 	page.PrevPageURL = page.prev(v)
 	page.LastPageURL = page.last(v)
 	page.FirstPageURL = page.first(v)
 	return
-}
-
-func (p *paginator) queryConditions() url.Values {
-	values := url.Values{}
-	conditions, b := p.Conditions()
-	if !b || p.values == nil {
-		return values
-	}
-	for _, condition := range conditions {
-		values.Set(condition, p.values.Get(condition))
-	}
-	return values
 }
 
 func (p *Page) next(v url.Values) string {
