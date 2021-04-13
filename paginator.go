@@ -54,22 +54,24 @@ type Page struct {
 }
 
 type paginator struct {
-	counter Counter
-	finder  Finder
-	from    int
-	to      int
-	perPage int
-	page    *Page
-	values  url.Values
+	counter    Counter
+	finder     Finder
+	from       int
+	to         int
+	conditions []string
+	perPage    int
+	page       *Page
+	values     url.Values
 }
 
-func ParsePage(pager Pager) (Page, error) {
+func ParsePage(pager Pager, conditions ...string) (Page, error) {
 	p := &paginator{
-		counter: pager,
-		finder:  pager,
-		perPage: DefaultPaginatorPerPage,
-		page:    &Page{},
-		values:  nil,
+		counter:    pager,
+		finder:     pager,
+		perPage:    DefaultPaginatorPerPage,
+		page:       &Page{},
+		conditions: conditions,
+		values:     nil,
 	}
 	p.ParseRequest(pager.Request())
 	return p.Find()
@@ -77,11 +79,12 @@ func ParsePage(pager Pager) (Page, error) {
 
 func New(counter Counter, finder Finder) Paginator {
 	return &paginator{
-		counter: counter,
-		finder:  finder,
-		perPage: DefaultPaginatorPerPage,
-		page:    &Page{},
-		values:  nil,
+		counter:    counter,
+		finder:     finder,
+		perPage:    DefaultPaginatorPerPage,
+		page:       &Page{},
+		conditions: []string{},
+		values:     nil,
 	}
 }
 
@@ -134,6 +137,17 @@ func (p *paginator) Total() int64 {
 	return p.page.Total
 }
 
+func (p *paginator) SetConditions(conditions ...string) {
+	p.conditions = conditions
+}
+
+func (p *paginator) Conditions() ([]string, bool) {
+	if len(p.conditions) == 0 {
+		return nil, false
+	}
+	return p.conditions, true
+}
+
 func (p *paginator) find() error {
 	var count int64
 
@@ -145,7 +159,7 @@ func (p *paginator) find() error {
 		return err
 	}
 
-	p.from, p.to = p.page.make(count)
+	p.page = p.makePage(count)
 
 	v, err := p.finder.Find(p)
 	if err != nil {
@@ -156,29 +170,42 @@ func (p *paginator) find() error {
 	return nil
 }
 
-func (p *Page) make(count int64) (from, to int) {
+func (p *paginator) makePage(count int64) (page *Page) {
+	page = p.page
 	if count == 0 {
-		p.CurrentPage = 1
+		page.CurrentPage = 1
 		return
 	}
 
-	p.Total = count
-	p.LastPage = int(math.Ceil(float64(p.Total) / float64(p.PerPage)))
-	if p.CurrentPage <= 0 || p.CurrentPage > p.LastPage {
-		p.CurrentPage = 1
+	page.Total = count
+	page.LastPage = int(math.Ceil(float64(page.Total) / float64(page.PerPage)))
+	if page.CurrentPage <= 0 || page.CurrentPage > page.LastPage {
+		page.CurrentPage = 1
 	}
-	from = (p.CurrentPage - 1) * p.PerPage
-	to = from + p.PerPage
-	p.NextPageURL = p.next()
-	p.PrevPageURL = p.prev()
-	p.LastPageURL = p.last()
-	p.FirstPageURL = p.first()
+	p.from = (page.CurrentPage - 1) * page.PerPage
+	p.to = p.from + page.PerPage
+	v := p.queryConditions()
+	page.NextPageURL = page.next(v)
+	page.PrevPageURL = page.prev(v)
+	page.LastPageURL = page.last(v)
+	page.FirstPageURL = page.first(v)
 	return
 }
 
-func (p *Page) next() string {
+func (p *paginator) queryConditions() url.Values {
+	values := url.Values{}
+	conditions, b := p.Conditions()
+	if !b || p.values == nil {
+		return values
+	}
+	for _, condition := range conditions {
+		values.Set(condition, p.values.Get(condition))
+	}
+	return values
+}
+
+func (p *Page) next(v url.Values) string {
 	if p.LastPage > p.CurrentPage+1 {
-		v := url.Values{}
 		p.perPage(v)
 		page(v, p.CurrentPage+1)
 		return p.Path + "?" + v.Encode()
@@ -186,9 +213,8 @@ func (p *Page) next() string {
 	return ""
 }
 
-func (p *Page) prev() string {
+func (p *Page) prev(v url.Values) string {
 	if p.CurrentPage-1 > 0 {
-		v := url.Values{}
 		p.perPage(v)
 		page(v, p.CurrentPage-1)
 		return p.Path + "?" + v.Encode()
@@ -196,18 +222,16 @@ func (p *Page) prev() string {
 	return ""
 }
 
-func (p *Page) last() string {
+func (p *Page) last(v url.Values) string {
 	if p.LastPage > 0 {
-		v := url.Values{}
 		p.perPage(v)
 		page(v, p.LastPage)
 		return p.Path + "?" + v.Encode()
 	}
 	return ""
 }
-func (p *Page) first() string {
+func (p *Page) first(v url.Values) string {
 	if p.Total > 0 {
-		v := url.Values{}
 		p.perPage(v)
 		page(v, 1)
 		return p.Path + "?" + v.Encode()
