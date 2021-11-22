@@ -142,6 +142,10 @@ func (p *paginator) findTotal(page *Page, it Iterator, t Turnable) error {
 	return nil
 }
 
+// New ...
+// @Description: create paginator object for use anywhere
+// @param ...Option
+// @return Paginator
 func New(opts ...Option) Paginator {
 	p := &paginator{
 		perPage:    defaultPaginatorPerPage,
