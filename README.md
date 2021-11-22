@@ -156,3 +156,32 @@ page,err:=p.Parse(&pageExample{
     //set init data for the paginator
 })
 ```
+
+5. Request from web
+```
+   http://127.0.0.1/api/v0/example?per_page=20&page=xx&id=xx,
+```
+result will like this:
+```json
+{
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "data": [
+    {
+        "id": "1",
+        "name": "test1"
+    },
+    {
+        "id": "2",
+        "name": "test2"
+    }
+    ],
+    "total": 2,
+    "first_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
+    "last_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
+    "next_page_url": "",
+    "prev_page_url": "",
+    "path": "127.0.0.1/api/v0/example"
+}
+```
