@@ -13,7 +13,7 @@ p:= paginator.New() //create the paginator module for use
 p:= paginator.New(PerPageOption(30)) //paging 30 items per page
 p:= paginator.New(PerPageKeyOption("perPage")) //set per page key with option
 p:= paginator.New(PageKeyOption("page")) //set page key with option
-p:= paginator.New(PerPageOption(30)，PerPageKeyOption("perPage"),PageKeyOption("page")) //create the paginator module with all custom options
+p:= paginator.New(PerPageOption(30),PerPageKeyOption("perPage"),PageKeyOption("page")) //create the paginator module with all custom options
 
 //use the paginator
 page,err:=p.Parse(Turnable) //parse will return the current page data and error
