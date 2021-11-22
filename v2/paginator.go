@@ -66,6 +66,10 @@ func (p *paginator) Parse(t Turnable) (Page, error) {
 	}
 
 	var conds []string
+	if h, ok := t.(InitHooker); ok {
+		h.Initialize()
+	}
+
 	if h, ok := t.(CustomHooker); ok {
 		h.Hook()(t.Request())
 	}

@@ -15,3 +15,9 @@ type Hooker interface {
 type CustomHooker interface {
 	Hook() func(*http.Request) []string
 }
+
+// InitHooker ...
+// @Description: call init before hook
+type InitHooker interface {
+	Initialize()
+}
