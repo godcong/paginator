@@ -4,7 +4,10 @@
 
 ## Usage
 
+1. Create the paginator object
 ```go
+import "github.com/godcong/paginator/v2"
+
 p:= paginator.New() //create the paginator module for use
 //you can create a paginator with a custom options
 p:= paginator.New(PerPageOption(30)) //paging 30 items per page
@@ -14,64 +17,147 @@ p:= paginator.New(PerPageOption(30)，PerPageKeyOption("perPage"),PageKeyOption(
 
 //use the paginator
 page,err:=p.Parse(Turnable) //parse will return the current page data and error
+```
 
+2. Implement the Turnable interface
+```go
 //Turnable at least 3 interfaces that need to be implemented
 Counter   //count the total data
 Finder    //find the data by page
 Requester //get the http request from your set
+```
 
+3. Implement for the custom query
+```go
 // If you need to customize the query you need to implement the following 2 interfaces
 Hooker //auto call the hook function when the page have setted value
 CustomHooker //parse customize the query from request all you want todo
 InitHooker //do something before the hook function do
+```
 
+4. A turnable example
+```go
 type pageExample struct {
-ctx     context.Context
-model   *Model
-request *http.Request
-query   *Query
+    ctx     context.Context
+    model   *Model
+    request *http.Request
+    query   *Query
 }
 
 func (p pageExample) Count(paginator.Iterator) (int64, error) {
-count, err := p.Query().Count(p.ctx)
-return int64(count), err
+    count, err := p.Query().Count(p.ctx)
+    return int64(count), err
 }
 
 func (p pageExample) Find(page paginator.PrePager) (interface{}, error) {
-return p.Query().Limit(page.Limit()).Offset(page.Offset()).All(p.ctx)
+    return p.Query().Limit(page.Limit()).Offset(page.Offset()).All(p.ctx)
 }
 
 func (p pageExample) Request() *http.Request {
-return p.request
+    return p.request
 }
 
 func (p *pageExample) hookID(v []string) bool {
-id:=v[0]
-if err == nil {
-p.query = p.query.Where(page.IDEq(id))
-}
-return true
+    id:=v[0]
+    if id == "" {
+        return true
+    }
+    p.query = p.query.Where(page.IDEq(id))
+    return true
 }
 
 func (p *pageExample) Hooks() map[string]func([]string) bool {
-return map[string]func([]string) bool{
-"id": p.hookID,
-}
+    return map[string]func([]string) bool{
+        "id": p.hookID,
+    }
 }
 
 func (p *pageExample) Initialize() {
-p.query = p.model.Query()
+    p.query = p.model.Query()
 }
 
 func (p *pageExample) Query() *Query {
-return p.query.Clone
+    return p.query.Clone
 }
 
 page,err:=p.Parse(&pageExample{
     //set init data for the paginator
 })
-
-
-
 ```
 
+4. Iterator is a interface for custom used
+```go
+// The hook results will add to iterator for range
+type pageExample struct {
+    ctx     context.Context
+    model   *Model
+    request *http.Request
+    query   *Query
+}
+
+func (p pageExample) Count(it paginator.Iterator) (int64, error) {
+    query:=p.model.Query()
+    it.Range(func(key string, val []string) bool {
+        switch key {
+        case "id":
+            id:=v[0]
+            if id == "" {
+                return true
+            }
+            query = query.Where(page.IDEq(id))
+            return true
+        }
+        return false
+    })
+    count, err := query.Count(p.ctx)
+    return int64(count), err
+}
+
+func (p pageExample) Find(page paginator.PrePager) (interface{}, error) {
+    query:=p.model.Query()
+    page.Iterator().Range(func(key string, val []string) bool {
+        switch key {
+        case "id":
+            id:=v[0]
+            if id == "" {
+                return true
+            }
+            query = query.Where(page.IDEq(id))
+            return true
+        }
+        return false
+    })
+    return query.Limit(page.Limit()).Offset(page.Offset()).All(p.ctx)
+}
+
+func (p pageExample) Request() *http.Request {
+    return p.request
+}
+
+func (p *pageExample) hookID(v []string) bool {
+    id:=v[0]
+    if id == "" {
+        return true
+    }
+    p.query = p.query.Where(page.IDEq(id))
+    return true
+}
+
+func (p *pageExample) Hooks() map[string]func([]string) bool {
+    return map[string]func([]string) bool{
+        "id": p.hookID,
+    }
+}
+
+func (p *pageExample) Initialize() {
+    p.query = p.model.Query()
+}
+
+func (p *pageExample) Query() *Query {
+    return p.query.Clone
+}
+
+page,err:=p.Parse(&pageExample{
+    //set init data for the paginator
+})
+```
