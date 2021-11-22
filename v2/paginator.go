@@ -9,10 +9,10 @@ import (
 )
 
 const defaultPaginatorPerPage = 15
-const defaultPageKey = "setPage"
+const defaultPageKey = "page"
 const defaultPerPageKey = "per_page"
 
-var DEBUG = false
+var DEBUG = true
 var ErrArgumentRequest = fmt.Errorf("paginator: argument request is not a valid http.Request")
 
 type Paginator interface {
@@ -31,10 +31,16 @@ func (p *paginator) getRequestPerPage(values url.Values) int {
 	if perPage == "" {
 		return perPageInt
 	}
+	if DEBUG {
+		fmt.Println("per_page", perPage)
+	}
 	var err error
 	perPageInt, err = strconv.Atoi(perPage)
 	if err != nil {
 		return defaultPaginatorPerPage
+	}
+	if DEBUG {
+		fmt.Println("perPageInt", perPageInt)
 	}
 	return perPageInt
 }
@@ -72,7 +78,7 @@ func (p *paginator) Parse(t Turnable) (Page, error) {
 	}
 
 	if h, ok := t.(CustomHooker); ok {
-		h.Hook()(t.Request())
+		conds = h.Hook()(t.Request())
 	}
 
 	var vv []string
@@ -91,7 +97,9 @@ func (p *paginator) Parse(t Turnable) (Page, error) {
 		v:     v,
 		conds: conds,
 	}
-
+	if DEBUG {
+		fmt.Println("page.per_page", page.PerPage)
+	}
 	err := p.findTotal(page, it, t)
 	if err != nil {
 		return Page{}, err
