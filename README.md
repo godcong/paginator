@@ -135,11 +135,6 @@ func (p pageExample) Request() *http.Request {
 }
 
 func (p *pageExample) hookID(v []string) bool {
-    id:=v[0]
-    if id == "" {
-        return true
-    }
-    p.query = p.query.Where(page.IDEq(id))
     return true
 }
 
