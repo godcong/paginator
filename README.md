@@ -45,7 +45,7 @@ func (p pageExample) Request() *http.Request {
 return p.request
 }
 
-func (p *pageExample) hookUpdate(v []string) bool {
+func (p *pageExample) hookID(v []string) bool {
 id:=v[0]
 if err == nil {
 p.query = p.query.Where(page.IDEq(id))
