@@ -27,11 +27,12 @@ type paginator struct {
 
 func (p *paginator) getRequestPerPage(values url.Values) int {
 	perPageInt := defaultPaginatorPerPage
-	if !values.Has(p.perPageKey) {
+	perPage := values.Get(p.perPageKey)
+	if perPage == "" {
 		return perPageInt
 	}
 	var err error
-	perPageInt, err = strconv.Atoi(values.Get(p.perPageKey))
+	perPageInt, err = strconv.Atoi(perPage)
 	if err != nil {
 		return defaultPaginatorPerPage
 	}
