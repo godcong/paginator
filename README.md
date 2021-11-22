@@ -66,5 +66,12 @@ p.query = p.model.Query()
 func (p *pageExample) Query() *ent.AnnounceQuery {
 return p.query.Clone
 }
+
+page,err:=p.Parse(&pageExample{
+    //set init data for the paginator
+})
+
+
+
 ```
 
