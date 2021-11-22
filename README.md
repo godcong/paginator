@@ -63,7 +63,7 @@ func (p *pageExample) Initialize() {
 p.query = p.model.Query()
 }
 
-func (p *pageExample) Query() *ent.AnnounceQuery {
+func (p *pageExample) Query() *Query {
 return p.query.Clone
 }
 
