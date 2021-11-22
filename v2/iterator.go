@@ -7,7 +7,7 @@ import (
 type Iterator interface {
 	Range(fn func(key string, val []string) bool)
 	Values() url.Values
-	Conditioner
+	Conditions() []string
 }
 
 type iterator struct {
