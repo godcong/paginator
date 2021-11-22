@@ -85,7 +85,7 @@ page,err:=p.Parse(&pageExample{
 })
 ```
 
-4. Iterator is a interface for custom used
+4. (Optional)Iterator is a interface for custom used
 ```go
 // The hook results will add to iterator for range
 type pageExample struct {
