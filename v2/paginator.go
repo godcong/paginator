@@ -12,7 +12,7 @@ const defaultPaginatorPerPage = 15
 const defaultPageKey = "page"
 const defaultPerPageKey = "per_page"
 
-var DEBUG = true
+var DEBUG = false
 var ErrArgumentRequest = fmt.Errorf("paginator: argument request is not a valid http.Request")
 
 type Paginator interface {
