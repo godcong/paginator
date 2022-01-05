@@ -26,10 +26,10 @@ type Page struct {
 type PrePager interface {
 	Page() Page
 	Offset() int
+	To() int
 	Limit() int
 	Total() int64
 	Current() int
-	PerPage() int
 	Iterator() Iterator
 }
 
@@ -49,7 +49,7 @@ func (p prePage) Offset() int {
 }
 
 func (p prePage) Limit() int {
-	return p.to
+	return p.page.PerPage
 }
 
 func (p prePage) Total() int64 {
@@ -60,8 +60,8 @@ func (p prePage) Current() int {
 	return p.page.CurrentPage
 }
 
-func (p prePage) PerPage() int {
-	return p.page.PerPage
+func (p prePage) To() int {
+	return p.to
 }
 
 func (p prePage) Iterator() Iterator {
