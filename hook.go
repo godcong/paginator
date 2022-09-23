@@ -4,11 +4,9 @@ import (
 	"net/http"
 )
 
-// Hooker ...
+// HttpHooker ...
 // @Description:
-type Hooker interface {
-	Hooks() map[string]func([]string) bool
-}
+type HttpHooker[V any] func(*Parse, *http.Request) error
 
 // CustomHooker ...
 // @Description: return used keys

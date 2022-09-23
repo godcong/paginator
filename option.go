@@ -1,5 +1,11 @@
 package paginator
 
+type s struct {
+	perPage    int
+	perPageKey string
+	pageKey    string
+}
+
 type Option func(p *paginator)
 
 // PerPageOption ...
