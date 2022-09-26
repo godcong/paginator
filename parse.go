@@ -1,5 +1,13 @@
 package paginator
 
+import (
+	"net/http"
+)
+
+type CanParser interface {
+	any | http.Request
+}
+
 type Values interface {
 	Get(key string) string
 	Set(key, value string)
@@ -9,10 +17,10 @@ type Values interface {
 	Encode() string
 }
 
-type Parser[T any] interface {
+type Parser interface {
 	FindValue(key string, d string) string
 	FindArray(key string, d []string) []string
 	FindNumber(key string, d float64) float64
 	FindOthers() Values
-	GetSource() T
+	GetSource() any
 }

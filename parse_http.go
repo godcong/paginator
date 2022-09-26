@@ -16,8 +16,8 @@ func (p *httpParser) GetEncoder() Values {
 	return p.r.URL.Query()
 }
 
-func (p *httpParser) GetSource() *http.Request {
-	return p.r
+func (p *httpParser) GetSource() any {
+	return any(p.r)
 }
 
 func (p *httpParser) FindValue(key string, d string) string {
@@ -50,10 +50,18 @@ func (p *httpParser) FindOthers() Values {
 	return p.others
 }
 
-func NewHttpParser(r *http.Request) Parser[*http.Request] {
+func NewHttpParser(r *http.Request) Parser {
 	return &httpParser{
 		r:      r,
 		query:  r.URL.Query(),
 		others: r.URL.Query(),
 	}
+}
+
+func requestPath(r *http.Request) string {
+	scheme := "http"
+	if r.URL.Scheme != "" {
+		scheme = r.URL.Scheme
+	}
+	return scheme + "://" + r.Host + r.URL.Path
 }

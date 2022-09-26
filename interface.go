@@ -5,7 +5,7 @@ type Counter interface {
 }
 
 type Getter interface {
-	Get() (any, error)
+	Get(page PageQuery) (any, error)
 }
 
 type Finder interface {
@@ -14,5 +14,5 @@ type Finder interface {
 }
 
 type Queryable interface {
-	Finder(Parser[any]) Finder
+	Finder(Parser) Finder
 }

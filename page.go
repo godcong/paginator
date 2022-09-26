@@ -4,9 +4,9 @@ import (
 	"math"
 )
 
-// pageQuery ...
+// PageQuery ...
 // @Description:
-type pageQuery struct {
+type PageQuery struct {
 	CurrentPage  int
 	LastPage     int
 	PerPage      int
@@ -22,12 +22,12 @@ type pageQuery struct {
 }
 
 type pageReady struct {
-	parser Parser[any]
-	page   *pageQuery
-	enc    Values
+	parser Parser
+	page   *PageQuery
+	//enc    Values
 }
 
-func (page *pageQuery) withTotal(total int64) *pageQuery {
+func (page *PageQuery) withTotal(total int64) *PageQuery {
 	page.Total = total
 	page.LastPage = int(math.Ceil(float64(page.Total) / float64(page.PerPage)))
 	if page.CurrentPage <= 0 || page.CurrentPage > page.LastPage {
@@ -36,7 +36,7 @@ func (page *pageQuery) withTotal(total int64) *pageQuery {
 	return page
 }
 
-func (page *pageQuery) values(op *Option) any {
+func (page *PageQuery) values(op *Option) any {
 	values := make(map[string]any)
 	values[op.DataKey()] = page.Data
 	values[op.PerPageKey()] = page.PerPage
