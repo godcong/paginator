@@ -68,7 +68,8 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 
 	pr.page.From = (pr.page.CurrentPage - 1) * pr.page.PerPage
 	pr.page.To = pr.page.From + pr.page.PerPage
-	v, err := finder.Get(*pr.page)
+
+	v, err := finder.Clone().Get(*pr.page)
 	if err != nil {
 		return nil, err
 	}
@@ -157,8 +158,15 @@ func (p *paginator) initialize(parser Parser) *pageReady {
 	}
 }
 
-func (p *paginator) getFinder(parser Parser, query Queryable) Finder {
-	return query.Finder(parser)
+func (p *paginator) getFinder(parser Parser, query Queryable) CloneFinder {
+	f := query.Finder(parser)
+	if c, ok := f.(CloneFinder); ok {
+		return c
+	}
+	return wrapClone{
+		query:  query,
+		parser: parser,
+	}
 }
 
 func stoi(s string, d int) int {
