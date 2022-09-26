@@ -1,6 +1,7 @@
 package paginator
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -10,6 +11,10 @@ type httpParser struct {
 	r      *http.Request
 	query  url.Values
 	others url.Values
+}
+
+func (p *httpParser) Context() context.Context {
+	return p.r.Context()
 }
 
 func (p *httpParser) GetEncoder() Values {
