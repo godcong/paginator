@@ -1,5 +1,9 @@
 package paginator
 
+import (
+	"context"
+)
+
 // Values is a collection of values
 type Values interface {
 	Get(key string) string
@@ -12,6 +16,7 @@ type Values interface {
 
 // Parser is a parser for Paginator
 type Parser interface {
+	Context() context.Context
 	FindValue(key string, d string) string
 	FindArray(key string, d []string) []string
 	FindNumber(key string, d float64) float64
