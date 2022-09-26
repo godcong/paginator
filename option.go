@@ -4,6 +4,7 @@ const (
 	defaultPageKey          = "page"
 	defaultStarPage         = 1
 	defaultPerPageKey       = "per_page"
+	defaultLastKey          = "last_page"
 	defaultPaginatorPerPage = 50
 	defaultDataKey          = "data"
 	defaultFirstPageKey     = "first_page_url"
@@ -15,6 +16,10 @@ const (
 	defaultPathKey          = "path"
 )
 
+// OptionSet is a set of options
+type OptionSet func(p *Option)
+
+// Option is an option for paginator
 type Option struct {
 	staPage        int
 	perPage        int
@@ -28,9 +33,36 @@ type Option struct {
 	currentPageKey string
 	totalKey       string
 	pathKey        string
+	order          bool
+	lastKey        string
 }
 
-// SetPathKey
+// SetLastKey ...
+// @receiver *Option
+// @param string
+// @return *Option
+func (o *Option) SetLastKey(lastKey string) *Option {
+	o.lastKey = lastKey
+	return o
+}
+
+// Order ...
+// @receiver *Option
+// @return bool
+func (o *Option) Order() bool {
+	return o.order
+}
+
+// SetOrder ...
+// @receiver *Option
+// @param bool
+// @return *Option
+func (o *Option) SetOrder(order bool) *Option {
+	o.order = order
+	return o
+}
+
+// SetPathKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -39,7 +71,7 @@ func (o *Option) SetPathKey(pathKey string) *Option {
 	return o
 }
 
-// SetCurrentPageKey
+// SetCurrentPageKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -48,7 +80,7 @@ func (o *Option) SetCurrentPageKey(currentPageKey string) *Option {
 	return o
 }
 
-// SetTotalKey
+// SetTotalKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -57,14 +89,14 @@ func (o *Option) SetTotalKey(totalKey string) *Option {
 	return o
 }
 
-// LastPageKey
+// LastPageKey ...
 // @receiver *Option
 // @return string
 func (o *Option) LastPageKey() string {
 	return o.lastPageKey
 }
 
-// SetLastPageKey
+// SetLastPageKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -73,14 +105,14 @@ func (o *Option) SetLastPageKey(lastPageKey string) *Option {
 	return o
 }
 
-// NextPageKey
+// NextPageKey ...
 // @receiver *Option
 // @return string
 func (o *Option) NextPageKey() string {
 	return o.nextPageKey
 }
 
-// SetNextPageKey
+// SetNextPageKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -89,14 +121,14 @@ func (o *Option) SetNextPageKey(nextPageKey string) *Option {
 	return o
 }
 
-// PrevPageKey
+// PrevPageKey ...
 // @receiver *Option
 // @return string
 func (o *Option) PrevPageKey() string {
 	return o.prevPageKey
 }
 
-// SetPrevPageKey
+// SetPrevPageKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -105,7 +137,7 @@ func (o *Option) SetPrevPageKey(prevPageKey string) *Option {
 	return o
 }
 
-// SetDataKey
+// SetDataKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -114,7 +146,7 @@ func (o *Option) SetDataKey(dataKey string) *Option {
 	return o
 }
 
-// SetFirstPageKey
+// SetFirstPageKey ...
 // @receiver *Option
 // @param string
 // @return *Option
@@ -123,23 +155,21 @@ func (o *Option) SetFirstPageKey(firstPageKey string) *Option {
 	return o
 }
 
-// DataKey
+// DataKey ...
 // @receiver *Option
 // @return string
 func (o *Option) DataKey() string {
 	return o.dataKey
 }
 
-type OptionSet func(p *Option)
-
-// StaPage
+// StaPage ...
 // @receiver *Option
 // @return int
 func (o *Option) StaPage() int {
 	return o.staPage
 }
 
-// SetStaPage
+// SetStaPage ...
 // @receiver *Option
 // @param int
 func (o *Option) SetStaPage(staPage int) *Option {
@@ -147,14 +177,14 @@ func (o *Option) SetStaPage(staPage int) *Option {
 	return o
 }
 
-// PerPage
+// PerPage ...
 // @receiver *Option
 // @return int
 func (o *Option) PerPage() int {
 	return o.perPage
 }
 
-// SetPerPage
+// SetPerPage ...
 // @receiver *Option
 // @param int
 func (o *Option) SetPerPage(perPage int) *Option {
@@ -162,14 +192,14 @@ func (o *Option) SetPerPage(perPage int) *Option {
 	return o
 }
 
-// PerPageKey
+// PerPageKey ...
 // @receiver *Option
 // @return string
 func (o *Option) PerPageKey() string {
 	return o.perPageKey
 }
 
-// SetPerPageKey
+// SetPerPageKey ...
 // @receiver *Option
 // @param string
 func (o *Option) SetPerPageKey(perPageKey string) *Option {
@@ -177,29 +207,64 @@ func (o *Option) SetPerPageKey(perPageKey string) *Option {
 	return o
 }
 
+// PageKey ...
+// @receiver *Option
+// @return string
 func (o *Option) PageKey() string {
 	return o.pageKey
 }
 
+// SetPageKey ...
+// @receiver *Option
+// @param string
+// @return *Option
 func (o *Option) SetPageKey(pageKey string) *Option {
 	o.pageKey = pageKey
 	return o
 }
 
+// FirstPageKey ...
+// @receiver *Option
+// @return string
 func (o *Option) FirstPageKey() string {
 	return o.firstPageKey
 }
 
+// TotalKey ...
+// @receiver *Option
+// @return string
 func (o *Option) TotalKey() string {
 	return o.totalKey
 }
 
+// CurrentPageKey ...
+// @receiver *Option
+// @return string
 func (o *Option) CurrentPageKey() string {
 	return o.currentPageKey
 }
 
+// PathKey ...
+// @receiver *Option
+// @return string
 func (o *Option) PathKey() string {
 	return o.pathKey
+}
+
+// LastKey ...
+// @receiver *Option
+// @return string
+func (o *Option) LastKey() string {
+	return o.lastKey
+}
+
+// SetOrderOption ...
+// @param string
+// @return OptionSet
+func SetOrderOption(order bool) OptionSet {
+	return func(p *Option) {
+		p.order = order
+	}
 }
 
 // PerPageOption ...
@@ -212,7 +277,7 @@ func PerPageOption(perPage int) OptionSet {
 	}
 }
 
-// DataKeyOption
+// DataKeyOption ...
 // @param string
 // @return OptionSet
 func DataKeyOption(dataKey string) OptionSet {
@@ -255,5 +320,7 @@ func defaultOption() *Option {
 		currentPageKey: defaultCurrentPageKey,
 		totalKey:       defaultTotalKey,
 		pathKey:        defaultPathKey,
+		lastKey:        defaultLastKey,
+		order:          true,
 	}
 }

@@ -16,7 +16,7 @@ type query struct {
 }
 
 func (q query) Count() (int64, error) {
-	return 100, nil
+	return 999, nil
 }
 
 func (q query) Get(page PageQuery) (any, error) {
@@ -37,7 +37,7 @@ func (q query) Finder(p Parser) Finder {
 }
 
 func handler(res http.ResponseWriter, req *http.Request) {
-	p := NewHttpParser(req)
+	p := NewHTTPParser(req)
 	parse, err := testPaginator.Parse(p)
 	if err != nil {
 		panic(err)

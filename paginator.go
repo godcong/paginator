@@ -1,3 +1,4 @@
+// Package paginator is a paginator for data pagination
 package paginator
 
 import (
@@ -6,17 +7,13 @@ import (
 	"strconv"
 )
 
-var DEBUG = false
-var ErrArgumentRequest = fmt.Errorf("paginator: argument request is not a valid http.Request")
-
+// Paginator is a paginator for data pagination
 type Paginator interface {
 	SetDefaultQuery(queryable Queryable) Paginator
 	Apply(opts ...OptionSet) Paginator
 	Parse(Parser) (any, error)
 	ParseWithQuery(Parser, Queryable) (any, error)
 }
-
-//type T any
 
 type paginator struct {
 	query Queryable
@@ -66,7 +63,7 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 		return nil, err
 	}
 	if !p.total(pr, count) {
-		return pr.page.values(p.op), nil
+		return pr.values(pr.page, p.op), nil
 	}
 
 	pr.page.From = (pr.page.CurrentPage - 1) * pr.page.PerPage
@@ -76,7 +73,8 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 		return nil, err
 	}
 	pr.page.Data = v
-	return pr.page.values(p.op), err
+	fmt.Printf("%+v", pr.page)
+	return pr.values(pr.page, p.op), err
 }
 
 func (p *paginator) total(pr *pageReady, count int64) bool {
@@ -94,7 +92,7 @@ func (p *paginator) total(pr *pageReady, count int64) bool {
 
 func (p *paginator) nextURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
-	if pa.page.LastPage > pa.page.CurrentPage+1 {
+	if pa.page.LastPage > pa.page.CurrentPage {
 		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
 		setPage(enc, p.op.PageKey(), pa.page.CurrentPage+1)
 		return pa.page.Path + "?" + enc.Encode()
@@ -104,7 +102,7 @@ func (p *paginator) nextURL(pa *pageReady) string {
 
 func (p *paginator) prevURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
-	if pa.page.CurrentPage-1 > 0 {
+	if pa.page.CurrentPage > 1 {
 		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
 		setPage(enc, p.op.PageKey(), pa.page.CurrentPage-1)
 		return pa.page.Path + "?" + enc.Encode()
@@ -148,7 +146,12 @@ func (p *paginator) initialize(parser Parser) *pageReady {
 	}
 	page.PerPage = stoi(parser.FindValue(p.op.perPageKey, ""), p.op.perPage)
 	page.CurrentPage = stoi(parser.FindValue(p.op.pageKey, ""), p.op.staPage)
+	values := orderedValues
+	if !p.op.order {
+		values = unorderedValues
+	}
 	return &pageReady{
+		values: values,
 		page:   page,
 		parser: parser,
 	}

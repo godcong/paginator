@@ -50,7 +50,10 @@ func (p *httpParser) FindOthers() Values {
 	return p.others
 }
 
-func NewHttpParser(r *http.Request) Parser {
+// NewHTTPParser creates a new http parser
+// @param *http.Request
+// @return Parser
+func NewHTTPParser(r *http.Request) Parser {
 	return &httpParser{
 		r:      r,
 		query:  r.URL.Query(),

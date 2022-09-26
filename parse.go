@@ -1,13 +1,6 @@
 package paginator
 
-import (
-	"net/http"
-)
-
-type CanParser interface {
-	any | http.Request
-}
-
+// Values is a collection of values
 type Values interface {
 	Get(key string) string
 	Set(key, value string)
@@ -17,6 +10,7 @@ type Values interface {
 	Encode() string
 }
 
+// Parser is a parser for Paginator
 type Parser interface {
 	FindValue(key string, d string) string
 	FindArray(key string, d []string) []string
