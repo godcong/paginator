@@ -2,262 +2,174 @@ package paginator
 
 import (
 	"fmt"
-	"math"
 	"net/http"
-	"net/url"
 	"strconv"
 )
-
-const defaultPageKey = "page"
-const defaultStarPage = 1
-const defaultPerPageKey = "per_page"
-const defaultPaginatorPerPage = 50
 
 var DEBUG = false
 var ErrArgumentRequest = fmt.Errorf("paginator: argument request is not a valid http.Request")
 
 type Paginator interface {
+	SetDefaultQuery(queryable Queryable) Paginator
+	Apply(opts ...OptionSet) Paginator
 	Parse(Parser[any]) (any, error)
+	ParseWithQuery(Parser[any], Queryable) (any, error)
 }
 
 //type T any
 
 type paginator struct {
-	staPage    int
-	perPage    int
-	perPageKey string
-	pageKey    string
-}
-
-//func (p *paginator) getRequestPerPage(values url.Values) int {
-//	perPageInt := defaultPaginatorPerPage
-//	perPage := values.Get(p.perPageKey)
-//	if perPage == "" {
-//		return perPageInt
-//	}
-//	if DEBUG {
-//		fmt.Println("per_page", perPage)
-//	}
-//	var err error
-//	perPageInt, err = strconv.Atoi(perPage)
-//	if err != nil {
-//		return defaultPaginatorPerPage
-//	}
-//	if DEBUG {
-//		fmt.Println("perPageInt", perPageInt)
-//	}
-//	return perPageInt
-//}
-
-//func (p *paginator) getRequestCurrent(values url.Values) int {
-//	currentInt, err := strconv.Atoi(values.Get(p.pageKey))
-//	if err != nil {
-//		return 1
-//	}
-//	return currentInt
-//}
-
-func (p *paginator) PageKey() string {
-	return p.pageKey
-}
-
-func (p *paginator) PerPageKey() string {
-	return p.perPageKey
-}
-
-func (p *paginator) Parse(parser Parser[any]) (any, error) {
-	page := p.initialize(parser)
-	//var page pageQuery
-	//parser, err := ps.Parse()
-	//if err != nil {
-	//	return page, err
-	//}
-	err := p.findTotal(page)
-	if err != nil {
-		return nil, err
-	}
-
-	//parser.
-	//r := t.Request()
-	//if r == nil {
-	//	return Find{}, ErrArgumentRequest
-	//}
-	//v := r.URL.Query()
-	//page := p.initPage(r, v)
-	//if DEBUG {
-	//	fmt.Println("parse query", "per setPage", page.PerPage, "setPage", page.CurrentPage, "path", page.Path)
-	//}
-
-	//var conds []string
-	//if h, ok := t.(InitHooker); ok {
-	//	h.Initialize()
-	//}
-
-	//if h, ok := t.(CustomHooker); ok {
-	//	conds = h.Hook()(t.Request())
-	//}
-
-	//var vv []string
-	//h, ok := t.(Hooker)
-	//if ok {
-	//	for key, hook := range h.Hooks() {
-	//		if vv, ok = v[key]; ok {
-	//			if hook(vv) {
-	//				conds = append(conds, key)
-	//			}
-	//		}
-	//	}
-	//}
-
-	//it := &iterator{
-	//	v:     v,
-	//	conds: conds,
-	//}
-	//if DEBUG {
-	//	fmt.Println("page.per_page", page.PerPage)
-	//}
-
-	err = p.findTotal(parser)
-	if err != nil {
-		return page, err
-	}
-	from := (page.CurrentPage - 1) * parser.PerPage
-	to := from + parser.PerPage
-	q, err := p.q.Find()
-	if err != nil {
-		return page, err
-	}
-	//found, err := t.Find(&pageQuery{
-	//	page: page,
-	//	from: from,
-	//	to:   to,
-	//	it:   it,
-	//})
-	//if err != nil {
-	//	return Find{}, err
-	//}
-	parser.Data = q
-	return *page, nil
-}
-
-func (p *paginator) findTotal(pa *pageReady) error {
-	count, err := p.counter.Count(pa)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		pa.CurrentPage = 1
-		return nil
-	}
-
-	pa.Total = count
-	pa.LastPage = int(math.Ceil(float64(pa.Total) / float64(pa.PerPage)))
-	if pa.CurrentPage <= 0 || pa.CurrentPage > pa.LastPage {
-		pa.CurrentPage = 1
-	}
-	//pa.NextPageURL = p.next(pa, it.Values())
-	//pa.PrevPageURL = p.prev(pa, it.Values())
-	//pa.LastPageURL = p.last(pa, it.Values())
-	//pa.FirstPageURL = p.first(pa, it.Values())
-	return nil
+	query Queryable
+	op    *Option
 }
 
 // New ...
 // @Description: create paginator object for use anywhere
-// @param ...Option
+// @param ...OptionSet
 // @return Paginator
-func New(ops ...Option) Paginator {
-	p := &paginator{
-		perPage:    defaultPaginatorPerPage,
-		perPageKey: defaultPerPageKey,
-		pageKey:    defaultPageKey,
-		staPage:    defaultStarPage,
-	}
+func New(ops ...OptionSet) Paginator {
+	op := defaultOption()
 	for i := range ops {
-		ops[i](p)
+		ops[i](op)
 	}
 	return &paginator{
-		q: q,
-		s: s,
+		op: op,
 	}
 }
 
-func (p *paginator) PerPage() int {
-	return p.perPage
+func (p *paginator) SetDefaultQuery(queryable Queryable) Paginator {
+	p.query = queryable
+	return p
 }
 
-func (p *paginator) SetPerPage(perPage int) {
-	p.perPage = perPage
+func (p *paginator) Apply(opts ...OptionSet) Paginator {
+	for i := range opts {
+		opts[i](p.op)
+	}
+	return p
 }
 
-func (p *paginator) next(pa *Parse[any], v url.Values) string {
-	if pa.LastPage > pa.CurrentPage+1 {
-		setPerPage(v, p.perPageKey, pa.PerPage)
-		setPage(v, p.pageKey, pa.CurrentPage+1)
-		return pa.Path + "?" + v.Encode()
+func (p *paginator) ParseWithQuery(parser Parser[any], finder Queryable) (any, error) {
+	return p.parse(parser, finder)
+}
+
+func (p *paginator) Parse(parser Parser[any]) (any, error) {
+	return p.parse(parser, p.query)
+}
+
+// Count
+// @receiver *paginator
+// @param Parser[any]
+// @param Queryable
+// @return int64
+// @return error
+func (p *paginator) Count(pa Parser[any], cf Queryable) (int64, error) {
+	return cf.Finder(pa).Count()
+}
+
+// Get
+// @receiver *paginator
+// @param Parser[any]
+// @param Queryable
+// @return any
+// @return error
+func (p *paginator) Get(pa Parser[any], cf Queryable) (any, error) {
+	return cf.Finder(pa).Get()
+}
+
+func (p *paginator) parse(parser Parser[any], cf Queryable) (any, error) {
+	pr := p.initialize(parser)
+	count, err := p.Count(parser, cf)
+	if err != nil {
+		return nil, err
+	}
+	if !p.total(pr, count) {
+		return pr.page.values(p.op), nil
+	}
+
+	pr.page.From = (pr.page.CurrentPage - 1) * pr.page.PerPage
+	pr.page.To = pr.page.From + pr.page.PerPage
+	v, err := p.Get(parser, cf)
+	if err != nil {
+		return nil, err
+	}
+	pr.page.Data = v
+	return pr.page.values(p.op), err
+}
+
+func (p *paginator) total(pr *pageReady, count int64) bool {
+	if count == 0 {
+		pr.page.CurrentPage = 1
+		return false
+	}
+	pr.page.withTotal(count)
+	pr.page.NextPageURL = p.nextURL(pr)
+	pr.page.PrevPageURL = p.prevURL(pr)
+	pr.page.LastPageURL = p.lastURL(pr)
+	pr.page.FirstPageURL = p.firstURL(pr)
+	return true
+}
+
+func (p *paginator) nextURL(pa *pageReady) string {
+	enc := pa.parser.FindOthers()
+	if pa.page.LastPage > pa.page.CurrentPage+1 {
+		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPage(enc, p.op.PageKey(), pa.page.CurrentPage+1)
+		return pa.page.Path + "?" + pa.enc.Encode()
 	}
 	return ""
 }
 
-func (p *paginator) prev(pa *Parse[any], v url.Values) string {
-	if pa.CurrentPage-1 > 0 {
-		setPerPage(v, p.perPageKey, pa.PerPage)
-		setPage(v, p.pageKey, pa.CurrentPage-1)
-		return pa.Path + "?" + v.Encode()
+func (p *paginator) prevURL(pa *pageReady) string {
+	enc := pa.parser.FindOthers()
+	if pa.page.CurrentPage-1 > 0 {
+		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPage(enc, p.op.PageKey(), pa.page.CurrentPage-1)
+		return pa.page.Path + "?" + pa.enc.Encode()
 	}
 	return ""
 }
 
-func (p *paginator) last(pa *Parse[any], v url.Values) string {
-	if pa.LastPage > 0 {
-		setPerPage(v, p.perPageKey, pa.PerPage)
-		setPage(v, p.pageKey, pa.LastPage)
-		return pa.Path + "?" + v.Encode()
+func (p *paginator) lastURL(pa *pageReady) string {
+	enc := pa.parser.FindOthers()
+	if pa.page.LastPage > 0 {
+		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPage(enc, p.op.PageKey(), pa.page.LastPage)
+		return pa.page.Path + "?" + pa.enc.Encode()
 	}
 	return ""
 }
-func (p *paginator) first(pa *Parse[any], v url.Values) string {
-	if pa.Total > 0 {
-		setPerPage(v, p.perPageKey, pa.PerPage)
-		setPage(v, p.pageKey, 1)
-		return pa.Path + "?" + v.Encode()
+func (p *paginator) firstURL(pa *pageReady) string {
+	enc := pa.parser.FindOthers()
+	if pa.page.Total > 0 {
+		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPage(enc, p.op.PageKey(), 1)
+		return pa.page.Path + "?" + pa.enc.Encode()
 	}
 	return ""
 }
 
-func setPage(values url.Values, key string, i int) {
+func setPage(values Values, key string, i int) {
 	values.Set(key, strconv.Itoa(i))
 }
 
-func setPerPage(values url.Values, key string, i int) {
+func setPerPage(values Values, key string, i int) {
 	values.Set(key, strconv.Itoa(i))
-}
-
-func (p *paginator) setPage(pa *Parse[any], values url.Values) {
-	setPage(values, p.pageKey, pa.CurrentPage)
-}
-
-func (p *paginator) setPerPage(pa *Parse[any], values url.Values) {
-	setPerPage(values, p.perPageKey, pa.PerPage)
 }
 
 func (p *paginator) initialize(parser Parser[any]) *pageReady {
 	page := new(pageQuery)
 	switch v := parser.(type) {
 	case Parser[*http.Request]:
-		r := v.Get()
+		r := v.GetSource()
 		page.Path = r.URL.Scheme + r.Host + r.URL.Path
 	}
-	page.PerPage = stoi(parser.FindValue(p.perPageKey, ""), p.perPage)
-	page.CurrentPage = stoi(parser.FindValue(p.pageKey, ""), p.staPage)
+	page.PerPage = stoi(parser.FindValue(p.op.perPageKey, ""), p.op.perPage)
+	page.CurrentPage = stoi(parser.FindValue(p.op.pageKey, ""), p.op.staPage)
 	return &pageReady{
 		page:   page,
 		parser: parser,
 	}
-}
-
-func (p *paginator) Count(pa *pageReady) (int64, error) {
-
 }
 
 func stoi(s string, d int) int {
