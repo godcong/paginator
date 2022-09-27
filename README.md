@@ -4,184 +4,114 @@
 
 ## Usage
 
-1. Create the paginator object
+- Create the paginator object
+
 ```go
-import "github.com/godcong/paginator/v2"
+package example
 
-p:= paginator.New() //create the paginator module for use
-//you can create a paginator with a custom options
-p:= paginator.New(PerPageOption(30)) //paging 30 items per page
-p:= paginator.New(PerPageKeyOption("perPage")) //set per page key with option
-p:= paginator.New(PageKeyOption("page")) //set page key with option
-p:= paginator.New(PerPageOption(30),PerPageKeyOption("perPage"),PageKeyOption("page")) //create the paginator module with all custom options
+import "github.com/godcong/paginator/v3"
 
-//use the paginator
-page,err:=p.Parse(Turnable) //parse will return the current page data and error
+func main() {
+	p := paginator.New() //create the paginator module for use
+	//you can create a paginator with a custom options
+	p := paginator.New(paginator.PerPageOption(30))           //paging 30 items per page
+	p := paginator.New(paginator.PerPageKeyOption("perPage")) //set per page key with option
+	p := paginator.New(paginator.PageKeyOption("page"))       //set page key with option
+	p := paginator.New(paginator.PerPageOption(30),
+		paginator.PerPageKeyOption("perPage"), paginator.PageKeyOption("page")) //create the paginator module with all custom options
+
+	//use the paginator
+	page, err := p.Parse(Queryable) //parse will return the current page data and error 
+}
+
 ```
 
-2. Implement the Turnable interface
-```go
+- Implement the Queryable interface
+
+```
 //Turnable at least 3 interfaces that need to be implemented
-Counter   //count the total data
-Finder    //find the data by page
-Requester //get the http request from your set
+Queryable //return the Finder for paginator query
+
+Counter //count the total data
+Getter  //find the data by page
+//optional
+Cloner //all the data 
 ```
 
-3. Implement for the custom query
-```go
-// If you need to customize the query you need to implement the following 2 interfaces
-Hooker //auto call the hook function when the page have setted value
-CustomHooker //parse customize the query from request all you want todo
-InitHooker //do something before the hook function do
-```
+- A Queryable example
 
-4. A turnable example
 ```go
+package example
+
+import (
+	"context"
+
+	"github.com/godcong/paginator/v3"
+)
+
 type pageExample struct {
-    ctx     context.Context
-    model   *Model
-    request *http.Request
-    query   *Query
+	query *Query
 }
 
-func (p pageExample) Count(paginator.Iterator) (int64, error) {
-    count, err := p.Query().Count(p.ctx)
-    return int64(count), err
+func (p pageExample) Count(ctx context.Context) (int64, error) {
+	count, err := p.query.Count(ctx)
+	return int64(count), err
 }
 
-func (p pageExample) Find(page paginator.PrePager) (interface{}, error) {
-    return p.Query().Limit(page.Limit()).Offset(page.Offset()).All(p.ctx)
+func (p pageExample) Clone() paginator.Finder {
+	return p.query.Clone()
 }
 
-func (p pageExample) Request() *http.Request {
-    return p.request
+func (p pageExample) Finder(parser paginator.Parser) paginator.Finder {
+	v := parser.FindValue("catch", "")
+	if v != "" {
+		p.query = p.query.Where(Cacth(v))
+	}
+	id := parser.FindValue("id", "")
+	if id != "" {
+		p.query = p.query.Where(page.IDEq(id))
+	}
+
+	return p
 }
 
-func (p *pageExample) hookID(v []string) bool {
-    id:=v[0]
-    if id == "" {
-        return true
-    }
-    p.query = p.query.Where(page.IDEq(id))
-    return true
+func main() {
+	//then use
+	p.SetDefaultQuery(&pageExample{})
+	page, err := p.Parse(paginator.NewHTTPParser(req))
+	//or
+	page, err := p.ParseWithQuery(paginator.NewHTTPParser(req), &pageExample)
 }
-
-func (p *pageExample) Hooks() map[string]func([]string) bool {
-    return map[string]func([]string) bool{
-        "id": p.hookID,
-    }
-}
-
-func (p *pageExample) Initialize() {
-    p.query = p.model.Query()
-}
-
-func (p *pageExample) Query() *Query {
-    return p.query.Clone
-}
-
-page,err:=p.Parse(&pageExample{
-    //set init data for the paginator
-})
 ```
 
-4. (Optional)Iterator is a interface for custom used
-```go
-// The hook results will add to iterator for range
-type pageExample struct {
-    ctx     context.Context
-    model   *Model
-    request *http.Request
-    query   *Query
-}
+- Request from web
 
-func (p pageExample) Count(it paginator.Iterator) (int64, error) {
-    query:=p.model.Query()
-    it.Range(func(key string, val []string) bool {
-        switch key {
-        case "id":
-            id:=v[0]
-            if id == "" {
-                return true
-            }
-            query = query.Where(page.IDEq(id))
-            return true
-        }
-        return false
-    })
-    count, err := query.Count(p.ctx)
-    return int64(count), err
-}
-
-func (p pageExample) Find(page paginator.PrePager) (interface{}, error) {
-    query:=p.model.Query()
-    page.Iterator().Range(func(key string, val []string) bool {
-        switch key {
-        case "id":
-            id:=v[0]
-            if id == "" {
-                return true
-            }
-            query = query.Where(page.IDEq(id))
-            return true
-        }
-        return false
-    })
-    return query.Limit(page.Limit()).Offset(page.Offset()).All(p.ctx)
-}
-
-func (p pageExample) Request() *http.Request {
-    return p.request
-}
-
-func (p *pageExample) hookID(v []string) bool {
-    return true
-}
-
-func (p *pageExample) Hooks() map[string]func([]string) bool {
-    return map[string]func([]string) bool{
-        "id": p.hookID,
-    }
-}
-
-func (p *pageExample) Initialize() {
-    p.query = p.model.Query()
-}
-
-func (p *pageExample) Query() *Query {
-    return p.query.Clone
-}
-
-page,err:=p.Parse(&pageExample{
-    //set init data for the paginator
-})
-```
-
-5. Request from web
 ```
    http://127.0.0.1/api/v0/example?per_page=20&page=xx&id=xx,
 ```
+
 result will like this:
+
 ```json
 {
-    "current_page": 1,
-    "last_page": 1,
-    "per_page": 20,
-    "data": [
+  "current_page": 1,
+  "last_page": 1,
+  "per_page": 20,
+  "data": [
     {
-        "id": "1",
-        "name": "test1"
+      "id": "1",
+      "name": "test1"
     },
     {
-        "id": "2",
-        "name": "test2"
+      "id": "2",
+      "name": "test2"
     }
-    ],
-    "total": 2,
-    "first_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
-    "last_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
-    "next_page_url": "",
-    "prev_page_url": "",
-    "path": "127.0.0.1/api/v0/example"
+  ],
+  "total": 2,
+  "first_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
+  "last_page_url": "127.0.0.1/api/v0/example?page=1&per_page=20",
+  "next_page_url": "",
+  "prev_page_url": "",
+  "path": "127.0.0.1/api/v0/example"
 }
 ```
