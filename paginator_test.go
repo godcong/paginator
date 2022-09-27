@@ -1,6 +1,7 @@
 package paginator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,11 +16,11 @@ var testPaginator Paginator
 type query struct {
 }
 
-func (q query) Count() (int64, error) {
+func (q query) Count(ctx context.Context) (int64, error) {
 	return 999, nil
 }
 
-func (q query) Get(page PageQuery) (any, error) {
+func (q query) Get(ctx context.Context, page PageQuery) (any, error) {
 	pages := page.PerPage
 	if has := int(page.Total) - (page.CurrentPage-1)*page.PerPage; has < pages {
 		pages = has
@@ -51,7 +52,7 @@ func init() {
 	testPaginator = New().SetDefaultQuery(&query{})
 
 	http.HandleFunc("/test", handler)
-	http.ListenAndServe(":3030", nil)
+	//http.ListenAndServe(":3030", nil)
 	//testServer..ListenAndServe(":3000", testServer)
 }
 

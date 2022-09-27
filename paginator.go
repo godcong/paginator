@@ -66,7 +66,7 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 		return pr.values(pr.page, p.op), nil
 	}
 
-	pr.page.From = (pr.page.CurrentPage - 1) * pr.page.PerPage
+	pr.page.From = (pr.page.CurrentPage - p.op.StartOffset()) * pr.page.PerPage
 	pr.page.To = pr.page.From + pr.page.PerPage
 
 	v, err := finder.Clone().Get(parser.Context(), *pr.page)
@@ -146,7 +146,6 @@ func (p *paginator) initialize(parser Parser) *pageReady {
 	case *http.Request:
 		page.Path = requestPath(v)
 	}
-	page.option = p.op
 	page.PerPage = stoi(parser.FindValue(p.op.perPageKey, ""), p.op.perPage)
 	page.CurrentPage = stoi(parser.FindValue(p.op.pageKey, ""), p.op.startPage)
 	values := orderedValues

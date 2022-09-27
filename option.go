@@ -225,6 +225,13 @@ func (o *Option) SetPageKey(pageKey string) *Option {
 	return o
 }
 
+// StartOffset ...
+// @receiver *Option
+// @return int
+func (o *Option) StartOffset() int {
+	return o.startPage - o.startIndex
+}
+
 // FirstPageKey ...
 // @receiver *Option
 // @return string
