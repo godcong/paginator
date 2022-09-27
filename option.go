@@ -14,6 +14,7 @@ const (
 	defaultCurrentPageKey   = "current_page"
 	defaultTotalKey         = "total"
 	defaultPathKey          = "path"
+	defaultStartIndex       = 0
 )
 
 // OptionSet is a set of options
@@ -21,7 +22,8 @@ type OptionSet func(p *Option)
 
 // Option is an option for paginator
 type Option struct {
-	staPage        int
+	startIndex     int
+	startPage      int
 	perPage        int
 	perPageKey     string
 	pageKey        string
@@ -166,14 +168,14 @@ func (o *Option) DataKey() string {
 // @receiver *Option
 // @return int
 func (o *Option) StaPage() int {
-	return o.staPage
+	return o.startPage
 }
 
 // SetStaPage ...
 // @receiver *Option
 // @param int
 func (o *Option) SetStaPage(staPage int) *Option {
-	o.staPage = staPage
+	o.startPage = staPage
 	return o
 }
 
@@ -221,6 +223,13 @@ func (o *Option) PageKey() string {
 func (o *Option) SetPageKey(pageKey string) *Option {
 	o.pageKey = pageKey
 	return o
+}
+
+// StartOffset ...
+// @receiver *Option
+// @return int
+func (o *Option) StartOffset() int {
+	return o.startPage - o.startIndex
 }
 
 // FirstPageKey ...
@@ -306,9 +315,20 @@ func PageKeyOption(key string) OptionSet {
 	}
 }
 
+// StartIndexOption ...
+// @Description: per key init on paginator
+// @param int
+// @return OptionSet
+func StartIndexOption(si int) OptionSet {
+	return func(p *Option) {
+		p.startIndex = si
+	}
+}
+
 func defaultOption() *Option {
 	return &Option{
-		staPage:        defaultStarPage,
+		startIndex:     defaultStartIndex,
+		startPage:      defaultStarPage,
 		perPage:        defaultPaginatorPerPage,
 		perPageKey:     defaultPerPageKey,
 		pageKey:        defaultPageKey,
@@ -320,7 +340,7 @@ func defaultOption() *Option {
 		currentPageKey: defaultCurrentPageKey,
 		totalKey:       defaultTotalKey,
 		pathKey:        defaultPathKey,
-		lastKey:        defaultLastKey,
 		order:          true,
+		lastKey:        defaultLastKey,
 	}
 }
