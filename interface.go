@@ -1,13 +1,17 @@
 package paginator
 
+import (
+	"context"
+)
+
 // Counter is a counter for Query
 type Counter interface {
-	Count() (int64, error)
+	Count(ctx context.Context) (int64, error)
 }
 
 // Getter is a getter for Query
 type Getter interface {
-	Get(page PageQuery) (any, error)
+	Get(ctx context.Context, page PageQuery) (any, error)
 }
 
 type Cloner interface {

@@ -58,7 +58,7 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 	pr := p.initialize(parser)
 	finder := p.getFinder(parser, query)
 
-	count, err := finder.Count()
+	count, err := finder.Count(parser.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 	pr.page.From = (pr.page.CurrentPage - 1) * pr.page.PerPage
 	pr.page.To = pr.page.From + pr.page.PerPage
 
-	v, err := finder.Clone().Get(*pr.page)
+	v, err := finder.Clone().Get(parser.Context(), *pr.page)
 	if err != nil {
 		return nil, err
 	}
