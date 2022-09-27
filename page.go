@@ -10,6 +10,7 @@ import (
 // PageQuery ...
 // @Description:
 type PageQuery struct {
+	option       *Option
 	CurrentPage  int
 	LastPage     int
 	PerPage      int

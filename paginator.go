@@ -140,13 +140,15 @@ func setPerPage(values Values, key string, i int) {
 
 func (p *paginator) initialize(parser Parser) *pageReady {
 	page := new(PageQuery)
+
 	src := parser.GetSource()
 	switch v := src.(type) {
 	case *http.Request:
 		page.Path = requestPath(v)
 	}
+	page.option = p.op
 	page.PerPage = stoi(parser.FindValue(p.op.perPageKey, ""), p.op.perPage)
-	page.CurrentPage = stoi(parser.FindValue(p.op.pageKey, ""), p.op.staPage)
+	page.CurrentPage = stoi(parser.FindValue(p.op.pageKey, ""), p.op.startPage)
 	values := orderedValues
 	if !p.op.order {
 		values = unorderedValues
