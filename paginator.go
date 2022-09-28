@@ -2,7 +2,6 @@
 package paginator
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -74,7 +73,6 @@ func (p *paginator) parse(parser Parser, query Queryable) (any, error) {
 		return nil, err
 	}
 	pr.page.Data = v
-	fmt.Printf("%+v", pr.page)
 	return pr.values(pr.page, p.op), err
 }
 
