@@ -92,7 +92,7 @@ func (p *paginator) total(pr *pageReady, count int64) bool {
 func (p *paginator) nextURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
 	if pa.page.LastPage > pa.page.CurrentPage {
-		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPerPage(enc, p.op.PerPageKey(), pa.page.PerPage)
 		setPage(enc, p.op.PageKey(), pa.page.CurrentPage+1)
 		return pa.page.Path + "?" + enc.Encode()
 	}
@@ -102,7 +102,7 @@ func (p *paginator) nextURL(pa *pageReady) string {
 func (p *paginator) prevURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
 	if pa.page.CurrentPage > 1 {
-		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPerPage(enc, p.op.PerPageKey(), pa.page.PerPage)
 		setPage(enc, p.op.PageKey(), pa.page.CurrentPage-1)
 		return pa.page.Path + "?" + enc.Encode()
 	}
@@ -112,7 +112,7 @@ func (p *paginator) prevURL(pa *pageReady) string {
 func (p *paginator) lastURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
 	if pa.page.LastPage > 0 {
-		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPerPage(enc, p.op.PerPageKey(), pa.page.PerPage)
 		setPage(enc, p.op.PageKey(), pa.page.LastPage)
 		return pa.page.Path + "?" + enc.Encode()
 	}
@@ -121,7 +121,7 @@ func (p *paginator) lastURL(pa *pageReady) string {
 func (p *paginator) firstURL(pa *pageReady) string {
 	enc := pa.parser.FindOthers()
 	if pa.page.Total > 0 {
-		setPerPage(enc, p.op.PerPageKey(), p.op.PerPage())
+		setPerPage(enc, p.op.PerPageKey(), pa.page.PerPage)
 		setPage(enc, p.op.PageKey(), 1)
 		return pa.page.Path + "?" + enc.Encode()
 	}

@@ -43,6 +43,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(parse)
 	marshal, err := json.Marshal(parse)
 	res.WriteHeader(http.StatusOK)
 	res.Write(marshal)
@@ -75,7 +76,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "http://127.0.0.1:18080/test?page=2", nil)
+			req := httptest.NewRequest("GET", "http://127.0.0.1:18080/test?page=2&per_page=1", nil)
 			//resp, err := http.Get("")
 
 			w := httptest.NewRecorder()
