@@ -1,6 +1,7 @@
 package paginator
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,57 +9,48 @@ import (
 
 func TestStartIndexOption(t *testing.T) {
 	type args struct {
-		oss []OptionSet
+		oss []*Option
 	}
 	tests := []struct {
 		name string
 		args args
-		want Option
+		want Config
 	}{
 		{
 			name: "",
 			args: args{
-				oss: []OptionSet{
-					SetOrderOption(true),
-					PerPageOption(15),
-					DataKeyOption("data_key_test"),
-					PerPageKeyOption("per_page_key_test"),
-					PageKeyOption("page_key_test"),
-					StartIndexOption(5),
+				oss: []*Option{
+					SettingOption().
+						SetPerPageKey("per_page_key_test").
+						SetPageKey("page_key_test"),
+					SettingPerPage(15).
+						SetDataKey("data_key_test"),
+					SettingStartIndex(5),
+					SettingStartPage(20),
 				},
 			},
-			want: Option{
-				startIndex:     5,
-				startPage:      0,
-				perPage:        15,
-				perPageKey:     "per_page_key_test",
-				pageKey:        "page_key_test",
-				dataKey:        "data_key_test",
-				firstPageKey:   "",
-				lastPageKey:    "",
-				nextPageKey:    "",
-				prevPageKey:    "",
-				currentPageKey: "",
-				totalKey:       "",
-				pathKey:        "",
-				order:          true,
-				lastKey:        "",
+			want: Config{
+				Keys: map[Key]string{
+					KeyPerPage: "per_page_key_test",
+					KeyPage:    "page_key_test",
+					KeyData:    "data_key_test",
+				},
+				StartIndex: 5,
+				StartPage:  20,
+				PerPage:    15,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var option Option
-			for _, oss := range tt.args.oss {
-				oss(&option)
-			}
-			assert.Equal(t, option.startPage, tt.want.startPage)
-			assert.Equal(t, option.order, tt.want.order)
-			assert.Equal(t, option.perPage, tt.want.perPage)
-			assert.Equal(t, option.dataKey, tt.want.dataKey)
-			assert.Equal(t, option.perPageKey, tt.want.perPageKey)
-			assert.Equal(t, option.pageKey, tt.want.pageKey)
-			assert.Equal(t, option.startIndex, tt.want.startIndex)
+			config := NewConfig(tt.args.oss...)
+			fmt.Println("config", config)
+			assert.Equal(t, tt.want.GetKey(KeyPage), config.GetKey(KeyPage))
+			assert.Equal(t, tt.want.GetKey(KeyPerPage), config.GetKey(KeyPerPage))
+			assert.Equal(t, tt.want.GetKey(KeyData), config.GetKey(KeyData))
+			assert.Equal(t, tt.want.PerPage, config.PerPage)
+			assert.Equal(t, tt.want.StartIndex, config.StartIndex)
+			assert.Equal(t, tt.want.StartPage, config.StartPage)
 		})
 	}
 }

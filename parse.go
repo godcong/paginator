@@ -1,25 +1,13 @@
 package paginator
 
-import (
-	"context"
-)
+type ParserFunc = func(cfg *Config, ignored map[string]struct{}) (PageReady, error)
 
-// Values is a collection of values
-type Values interface {
-	Get(key string) string
-	Set(key, value string)
-	Add(key, value string)
-	Del(key string)
-	Has(key string) bool
-	Encode() string
+type parser interface {
+	ParserFunc | *httpParse | *CustomParse
 }
 
-// Parser is a parser for Paginator
-type Parser interface {
-	Context() context.Context
-	FindValue(key string, d string) string
-	FindArray(key string, d []string) []string
-	FindNumber(key string, d float64) float64
-	FindOthers() Values
-	GetSource() any
+// Parsable is a parser for Paginator
+type Parsable interface {
+	Type() string
+	Parse(cfg *Config, ignored map[string]struct{}) (PageReady, error)
 }

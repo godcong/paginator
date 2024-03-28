@@ -1,346 +1,224 @@
 package paginator
 
-const (
-	defaultPageKey          = "page"
-	defaultStarPage         = 1
-	defaultPerPageKey       = "per_page"
-	defaultLastKey          = "last_page"
-	defaultPaginatorPerPage = 50
-	defaultDataKey          = "data"
-	defaultFirstPageKey     = "first_page_url"
-	defaultLastPageKey      = "last_page_url"
-	defaultNextPageKey      = "next_page_url"
-	defaultPrevPageKey      = "prev_page_url"
-	defaultCurrentPageKey   = "current_page"
-	defaultTotalKey         = "total"
-	defaultPathKey          = "path"
-	defaultStartIndex       = 0
-)
-
-// OptionSet is a set of options
-type OptionSet func(p *Option)
-
-// Option is an option for paginator
+// Option is an Option for paginator
 type Option struct {
-	startIndex     int
-	startPage      int
-	perPage        int
-	perPageKey     string
-	pageKey        string
-	dataKey        string
-	firstPageKey   string
-	lastPageKey    string
-	nextPageKey    string
-	prevPageKey    string
-	currentPageKey string
-	totalKey       string
-	pathKey        string
-	order          bool
-	lastKey        string
+	customize       bool
+	usePathPaginate bool
+	ignoreKeys      []Key
+	noSuccess       bool
+	keySet          map[Key]string
+	valSet          map[Value]int
 }
 
-// SetLastKey ...
+// SetPathKey set the path key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetLastKey(lastKey string) *Option {
-	o.lastKey = lastKey
+func (o *Option) SetPathKey(val string) *Option {
+	o.SetKey(KeyPath, val)
 	return o
 }
 
-// Order ...
-// @receiver *Option
-// @return bool
-func (o *Option) Order() bool {
-	return o.order
-}
-
-// SetOrder ...
-// @receiver *Option
-// @param bool
-// @return *Option
-func (o *Option) SetOrder(order bool) *Option {
-	o.order = order
-	return o
-}
-
-// SetPathKey ...
+// SetCurrentPageKey set the current page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetPathKey(pathKey string) *Option {
-	o.pathKey = pathKey
+func (o *Option) SetCurrentPageKey(val string) *Option {
+	o.SetKey(KeyCurrentPage, val)
 	return o
 }
 
-// SetCurrentPageKey ...
+// SetTotalKey set the total key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetCurrentPageKey(currentPageKey string) *Option {
-	o.currentPageKey = currentPageKey
+func (o *Option) SetTotalKey(val string) *Option {
+	o.SetKey(KeyTotal, val)
 	return o
 }
 
-// SetTotalKey ...
+// SetLastPageKey set the last page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetTotalKey(totalKey string) *Option {
-	o.totalKey = totalKey
+func (o *Option) SetLastPageKey(val string) *Option {
+	o.SetKey(KeyLastPage, val)
 	return o
 }
 
-// LastPageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) LastPageKey() string {
-	return o.lastPageKey
-}
-
-// SetLastPageKey ...
+// SetNextPageKey set the next page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetLastPageKey(lastPageKey string) *Option {
-	o.lastPageKey = lastPageKey
+func (o *Option) SetNextPageKey(val string) *Option {
+	o.SetKey(KeyNextPageUrl, val)
 	return o
 }
 
-// NextPageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) NextPageKey() string {
-	return o.nextPageKey
-}
-
-// SetNextPageKey ...
+// SetPrevPageKey set the prev page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetNextPageKey(nextPageKey string) *Option {
-	o.nextPageKey = nextPageKey
+func (o *Option) SetPrevPageKey(val string) *Option {
+	o.SetKey(KeyPrevPageUrl, val)
 	return o
 }
 
-// PrevPageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) PrevPageKey() string {
-	return o.prevPageKey
-}
-
-// SetPrevPageKey ...
+// SetDataKey set the data key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetPrevPageKey(prevPageKey string) *Option {
-	o.prevPageKey = prevPageKey
+func (o *Option) SetDataKey(val string) *Option {
+	o.SetKey(KeyData, val)
 	return o
 }
 
-// SetDataKey ...
+// SetFirstPageKey set the first page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetDataKey(dataKey string) *Option {
-	o.dataKey = dataKey
+func (o *Option) SetFirstPageKey(val string) *Option {
+	o.SetKey(KeyFirstPageUrl, val)
 	return o
 }
 
-// SetFirstPageKey ...
+// SetPerPageKey set the per page key to paginator
+// @receiver *Option
+// @param string
+func (o *Option) SetPerPageKey(val string) *Option {
+	o.SetKey(KeyPerPage, val)
+	return o
+}
+
+// SetPageKey set the page key to paginator
 // @receiver *Option
 // @param string
 // @return *Option
-func (o *Option) SetFirstPageKey(firstPageKey string) *Option {
-	o.firstPageKey = firstPageKey
+func (o *Option) SetPageKey(val string) *Option {
+	o.SetKey(KeyPage, val)
 	return o
 }
 
-// DataKey ...
-// @receiver *Option
-// @return string
-func (o *Option) DataKey() string {
-	return o.dataKey
-}
-
-// StaPage ...
-// @receiver *Option
-// @return int
-func (o *Option) StaPage() int {
-	return o.startPage
-}
-
-// SetStaPage ...
+// SetStartIndex set the start index to paginator
 // @receiver *Option
 // @param int
-func (o *Option) SetStaPage(staPage int) *Option {
-	o.startPage = staPage
+// @return *Option
+func (o *Option) SetStartIndex(si int) *Option {
+	o.SetValue(ValueStartIndex, si)
 	return o
 }
 
-// PerPage ...
+// SetStartPage ...
 // @receiver *Option
-// @return int
-func (o *Option) PerPage() int {
-	return o.perPage
+// @param int
+// @return *Option
+func (o *Option) SetStartPage(sp int) *Option {
+	o.SetValue(ValueStartPage, sp)
+	return o
 }
 
 // SetPerPage ...
 // @receiver *Option
 // @param int
-func (o *Option) SetPerPage(perPage int) *Option {
-	o.perPage = perPage
-	return o
-}
-
-// PerPageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) PerPageKey() string {
-	return o.perPageKey
-}
-
-// SetPerPageKey ...
-// @receiver *Option
-// @param string
-func (o *Option) SetPerPageKey(perPageKey string) *Option {
-	o.perPageKey = perPageKey
-	return o
-}
-
-// PageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) PageKey() string {
-	return o.pageKey
-}
-
-// SetPageKey ...
-// @receiver *Option
-// @param string
 // @return *Option
-func (o *Option) SetPageKey(pageKey string) *Option {
-	o.pageKey = pageKey
+func (o *Option) SetPerPage(perPage int) *Option {
+	o.SetValue(ValuePerPage, perPage)
 	return o
 }
 
-// StartOffset ...
+// AddIgnore add ignore key
 // @receiver *Option
-// @return int
-func (o *Option) StartOffset() int {
-	return o.startPage - o.startIndex
+// @param Key
+func (o *Option) AddIgnore(key Key) *Option {
+	o.ignoreKeys = append(o.ignoreKeys, key)
+	return o
 }
 
-// FirstPageKey ...
+// SetIgnores set ignore keys
 // @receiver *Option
-// @return string
-func (o *Option) FirstPageKey() string {
-	return o.firstPageKey
+// @param ...Key
+func (o *Option) SetIgnores(keys ...Key) *Option {
+	o.ignoreKeys = keys
+	return o
 }
 
-// TotalKey ...
-// @receiver *Option
-// @return string
-func (o *Option) TotalKey() string {
-	return o.totalKey
+func (o *Option) NoSuccess() *Option {
+	o.noSuccess = true
+	return o
 }
 
-// CurrentPageKey ...
-// @receiver *Option
-// @return string
-func (o *Option) CurrentPageKey() string {
-	return o.currentPageKey
+func (o *Option) UsePathPaginate() *Option {
+	o.usePathPaginate = true
+	return o
 }
 
-// PathKey ...
-// @receiver *Option
-// @return string
-func (o *Option) PathKey() string {
-	return o.pathKey
-}
-
-// LastKey ...
-// @receiver *Option
-// @return string
-func (o *Option) LastKey() string {
-	return o.lastKey
-}
-
-// SetOrderOption ...
-// @param string
-// @return OptionSet
-func SetOrderOption(order bool) OptionSet {
-	return func(p *Option) {
-		p.order = order
-	}
-}
-
-// PerPageOption ...
+// SettingPerPage set the per page to paginator
 // @Description: per page init on paginator
 // @param int
-// @return OptionSet
-func PerPageOption(perPage int) OptionSet {
-	return func(p *Option) {
-		p.perPage = perPage
-	}
+// @return Option
+func SettingPerPage(perPage int) *Option {
+	opts := SettingOption()
+	opts.SetValue(ValuePerPage, perPage)
+	return opts
 }
 
-// DataKeyOption ...
-// @param string
-// @return OptionSet
-func DataKeyOption(dataKey string) OptionSet {
-	return func(p *Option) {
-		p.dataKey = dataKey
-	}
-}
-
-// PerPageKeyOption ...
-// @Description: per page key init on paginator
-// @param string
-// @return OptionSet
-func PerPageKeyOption(key string) OptionSet {
-	return func(p *Option) {
-		p.perPageKey = key
-	}
-}
-
-// PageKeyOption ...
-// @Description: per key init on paginator
-// @param string
-// @return OptionSet
-func PageKeyOption(key string) OptionSet {
-	return func(p *Option) {
-		p.pageKey = key
-	}
-}
-
-// StartIndexOption ...
-// @Description: per key init on paginator
+// SettingStartIndex set the start index to paginator
+// @Description: start index init on paginator
 // @param int
-// @return OptionSet
-func StartIndexOption(si int) OptionSet {
-	return func(p *Option) {
-		p.startIndex = si
-	}
+// @return Option
+func SettingStartIndex(si int) *Option {
+	opts := SettingOption()
+	opts.SetValue(ValueStartIndex, si)
+	return opts
+}
+
+// SettingStartPage set the start page to paginator
+// @Description: start page init on paginator
+// @param int
+// @return *Option
+func SettingStartPage(sp int) *Option {
+	opts := SettingOption()
+	opts.SetValue(ValueStartPage, sp)
+	return opts
 }
 
 func defaultOption() *Option {
 	return &Option{
-		startIndex:     defaultStartIndex,
-		startPage:      defaultStarPage,
-		perPage:        defaultPaginatorPerPage,
-		perPageKey:     defaultPerPageKey,
-		pageKey:        defaultPageKey,
-		dataKey:        defaultDataKey,
-		firstPageKey:   defaultFirstPageKey,
-		lastPageKey:    defaultLastPageKey,
-		nextPageKey:    defaultNextPageKey,
-		prevPageKey:    defaultPrevPageKey,
-		currentPageKey: defaultCurrentPageKey,
-		totalKey:       defaultTotalKey,
-		pathKey:        defaultPathKey,
-		order:          true,
-		lastKey:        defaultLastKey,
+		customize: false,
+		keySet:    make(map[Key]string),
+		valSet:    make(map[Value]int),
 	}
+}
+
+func SettingOption() *Option {
+	return defaultOption()
+}
+
+func (o *Option) SetKey(key Key, value string) {
+	o.customize = true
+	if o.keySet == nil {
+		o.keySet = make(map[Key]string)
+	}
+	o.keySet[key] = value
+}
+
+func (o *Option) SetValue(key Value, num int) {
+	if o.valSet == nil {
+		o.valSet = make(map[Value]int)
+	}
+	o.valSet[key] = num
+}
+
+func (o *Option) ClearKeys() {
+	o.customize = false
+	o.keySet = make(map[Key]string)
+}
+
+func (o *Option) ClearValues() {
+	o.valSet = make(map[Value]int)
+}
+
+func (o *Option) Clear() {
+	o.ClearKeys()
+	o.ClearValues()
 }

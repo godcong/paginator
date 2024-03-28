@@ -1,72 +1,61 @@
 package paginator
 
 import (
-	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
-type httpParser struct {
-	r      *http.Request
-	query  url.Values
-	others url.Values
+type httpParse struct {
+	r     *http.Request
+	query url.Values
 }
 
-func (p *httpParser) Context() context.Context {
-	return p.r.Context()
+func (p *httpParse) Parse(cfg *Config, ignored map[string]struct{}) (PageReady, error) {
+	return p.parse(cfg, ignored)
 }
 
-func (p *httpParser) GetEncoder() Values {
-	return p.r.URL.Query()
+func (p *httpParse) Type() string {
+	return "http"
 }
 
-func (p *httpParser) GetSource() any {
-	return any(p.r)
-}
-
-func (p *httpParser) FindValue(key string, d string) string {
-	if p.query.Has(key) {
-		p.others.Del(key)
-		return p.query.Get(key)
+func (p *httpParse) parse(cfg *Config, ignored map[string]struct{}) (*query, error) {
+	var pr query
+	pr.config = cfg
+	for s := range ignored {
+		delete(p.query, s)
 	}
-	return d
-}
 
-func (p *httpParser) FindArray(key string, d []string) []string {
-	if p.query.Has(key) {
-		p.others.Del(key)
-		return p.query[key]
+	if !cfg.SkipPath {
+		pr.fullPath = fullRequestPath(p.r)
 	}
-	return d
+	p.query = p.r.URL.Query()
+	var key string
+	key = cfg.GetKey(KeyPerPage)
+	pr.perPage = stoi(p.query.Get(key), cfg.PerPage)
+	delete(p.query, key)
+
+	key = cfg.GetKey(KeyPage)
+	pr.currentPage = stoi(p.query.Get(key), cfg.StartPage)
+	delete(p.query, key)
+
+	pr.values = p.query
+	return &pr, nil
 }
 
-func (p *httpParser) FindNumber(key string, d float64) float64 {
-	if p.query.Has(key) {
-		p.others.Del(key)
-		if n, err := strconv.ParseFloat(p.query.Get(key), 10); err == nil {
-			return n
-		}
-	}
-	return d
+func getValueOrDefault(v url.Values, key string, dv int) int {
+	return stoi(v.Get(key), dv)
 }
 
-func (p *httpParser) FindOthers() Values {
-	return p.others
-}
-
-// NewHTTPParser creates a new http parser
+// FromHTTP creates a new http parser
 // @param *http.Request
-// @return Parser
-func NewHTTPParser(r *http.Request) Parser {
-	return &httpParser{
-		r:      r,
-		query:  r.URL.Query(),
-		others: r.URL.Query(),
+// @return Parsable
+func FromHTTP(r *http.Request) Parsable {
+	return &httpParse{
+		r: r,
 	}
 }
 
-func requestPath(r *http.Request) string {
+func fullRequestPath(r *http.Request) string {
 	scheme := "http"
 	if r.URL.Scheme != "" {
 		scheme = r.URL.Scheme
